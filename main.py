@@ -111,13 +111,16 @@ def train_nn(sess, epochs, batch_size, get_batches_fn, train_op, cross_entropy_l
     :param keep_prob: TF Placeholder for dropout keep probability
     :param learning_rate: TF Placeholder for learning rate
     """
+    print("Initializing Variables")
     sess.run(tf.global_variables_initializer())
-
+    
+    print("Starting training");
     # TODO: Implement function
     for epoch in range(epochs):
+        print("Runnning epoch:",epoch)
         for image,label in get_batches_fn(batch_size):
             _, loss = sess.run([train_op, cross_entropy_loss], 
-                               feed_dict={input_image: image, correct_label: label, keep_prob: 0.5, learning_rate: 0.0009})
+                               feed_dict={input_image: image, correct_label: label, keep_prob: 0.5, learning_rate: 0.0001})
             print("Loss: = {:.3f}".format(loss))
 
         
@@ -151,7 +154,7 @@ def run():
         correct_label = tf.placeholder(tf.int32, [None, None, None, num_classes], name='correct_label')
         learning_rate = tf.placeholder(tf.float32, name='learning_rate')
         
-        epochs = 10
+        epochs = 2
         batch_size = 2
 
         # TODO: Build NN using load_vgg, layers, and optimize function
