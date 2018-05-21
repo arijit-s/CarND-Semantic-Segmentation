@@ -57,12 +57,21 @@ def layers(vgg_layer3_out, vgg_layer4_out, vgg_layer7_out, num_classes):
     :return: The Tensor for the last layer of output
     """
     # TODO: Implement function
-    conv_1x1 = tf.layers.conv2d(vgg_layer7_out,num_classes, 1, padding='same',kernel_regularizer=tf.contrib.layers.l2_regularizer(1e-3))
-    output = tf.layers.conv2d(conv_1x1,num_classes, 4, 2, padding='same',kernel_regularizer=tf.contrib.layers.l2_regularizer(1e-3))
+    conv_1x1_layer7 = tf.layers.conv2d(vgg_layer7_out,num_classes, 1, padding='same',kernel_regularizer=tf.contrib.layers.l2_regularizer(1e-3))
+    output_layer7 = tf.layers.conv2d_transpose(conv_1x1_layer7,num_classes, 4, 2, padding='same',kernel_regularizer=tf.contrib.layers.l2_regularizer(1e-3))
+
+    conv_1x1_layer4 = tf.layers.conv2d(vgg_layer4_out,num_classes, 1, padding='same',kernel_regularizer=tf.contrib.layers.l2_regularizer(1e-3))
+    skip_layer4 = tf.add(output_layer7, conv_1x1_layer4)
+    output_layer4 = tf.layers.conv2d_transpose(skip_layer4,num_classes, 4, 2, padding='same',kernel_regularizer=tf.contrib.layers.l2_regularizer(1e-3))
+
+    conv_1x1_layer3 = tf.layers.conv2d(vgg_layer3_out,num_classes, 1, padding='same',kernel_regularizer=tf.contrib.layers.l2_regularizer(1e-3))
+    skip_layer3 = tf.add(output_layer4, conv_1x1_layer3)
+    output_layer4 = tf.layers.conv2d_transpose(skip_layer3,num_classes, 16, 8, padding='same',kernel_regularizer=tf.contrib.layers.l2_regularizer(1e-3))
+   
     
     #Add other VGG layers
     
-    return output
+    return output_layer4
 tests.test_layers(layers)
 
 
@@ -77,7 +86,8 @@ def optimize(nn_last_layer, correct_label, learning_rate, num_classes):
     """
     # TODO: Implement function
     logits = tf.reshape(nn_last_layer,(-1,num_classes))
-    
+    correct_label = tf.reshape(correct_label, (-1,num_classes))
+
     cross_entropy_loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits = logits,labels = correct_label))
     
     train_op = tf.train.AdamOptimizer(learning_rate).minimize(cross_entropy_loss)
@@ -101,6 +111,8 @@ def train_nn(sess, epochs, batch_size, get_batches_fn, train_op, cross_entropy_l
     :param keep_prob: TF Placeholder for dropout keep probability
     :param learning_rate: TF Placeholder for learning rate
     """
+    sess.run(tf.global_variables_initializer())
+
     # TODO: Implement function
     for epoch in range(epochs):
         for image,label in get_batches_fn(batch_size):
